@@ -129,7 +129,27 @@ fn run(field: *funge.Field) !u8 {
                     }
                 },
 
-                // Output
+                // Input/Output
+                '&' => {
+                    const stdin = std.io.getStdIn().reader();
+                    var val: i64 = 0;
+                    int_in: while(stdin.readByte()) |byte| {
+                        switch(byte){
+                            '0'...'9' => val = (val * 10) + (byte - '0'),
+                            else => break :int_in,
+                        }
+                    } else |err| {
+                        switch(err){
+                            else => {},
+                        }
+                    }
+                    try stack.push(val);
+                },
+                '~' => {
+                    const stdin = std.io.getStdIn().reader();
+                    const c = try stdin.readByte();
+                    try stack.push(@intCast(u8, c));
+                },
                 '.' => {
                     const a = stack.pop();
                     print("{d} ", .{a});

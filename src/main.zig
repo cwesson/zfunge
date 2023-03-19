@@ -1,6 +1,6 @@
 //! @file main.zig
 //! @author Conlan Wesson
-//! Basic Befunge interpretter written in Zig.
+//! Basic Befunge interpreter written in Zig.
 
 const std = @import("std");
 const expect = @import("std").testing.expect;
@@ -9,6 +9,7 @@ const funge = struct {
     usingnamespace @import("vector.zig");
     usingnamespace @import("field.zig");
     usingnamespace @import("stack.zig");
+    usingnamespace @import("ip.zig");
 };
 
 var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
@@ -55,103 +56,171 @@ fn parse(filename: []u8) !funge.Field {
 /// Run a Funge program.
 /// @param field Field of the Funge program.
 /// @return Exit code from the Funge program.
-fn run(field: funge.Field) !u8 {
+fn run(field: *funge.Field) !u8 {
     // Prepare IP
-    var pos: funge.Vector = .{.x=0, .y=0};
-    var dir: funge.Vector = .{.x=1, .y=0};
+    var ip = funge.IP.init(.{.x=0, .y=0}, .{.x=1, .y=0}, field);
     // Prepare stack
     var stack = try funge.Stack.init();
+    var string_mode = false;
 
     // Run the program
     while(true) {
-        const i = field.get(pos);
-        switch(i) {
-            ' ' => {},
+        // Get next instruction
+        const i = field.get(ip.position());
 
-            // Numbers
-            '0'...'9' => try stack.push(i - '0'),
+        // Execute instruction
+        if(string_mode){
+            if(i != '"'){
+                try stack.push(i);
+            }else{
+                string_mode = false;
+            }
+        }else{
+            switch(i) {
+                ' ' => {},
 
-            // Arithmetic
-            '+' => {
-                const a = stack.pop();
-                const b = stack.pop();
-                try stack.push(b+a);
-            },
-            '-' => {
-                const a = stack.pop();
-                const b = stack.pop();
-                try stack.push(b-a);
-            },
-            '*' => {
-                const a = stack.pop();
-                const b = stack.pop();
-                try stack.push(b*a);
-            },
-            '/' => {
-                const a = stack.pop();
-                const b = stack.pop();
-                try stack.push(@divTrunc(b, a));
-            },
-            '%' => {
-                const a = stack.pop();
-                const b = stack.pop();
-                try stack.push(@rem(b, a));
-            },
+                // Numbers
+                '0'...'9' => try stack.push(i - '0'),
 
-            // Output
-            '.' => {
-                const a = stack.pop();
-                print("{d} ", .{a});
-            },
+                // Arithmetic
+                '+' => {
+                    const a = stack.pop();
+                    const b = stack.pop();
+                    try stack.push(b+a);
+                },
+                '-' => {
+                    const a = stack.pop();
+                    const b = stack.pop();
+                    try stack.push(b-a);
+                },
+                '*' => {
+                    const a = stack.pop();
+                    const b = stack.pop();
+                    try stack.push(b*a);
+                },
+                '/' => {
+                    const a = stack.pop();
+                    const b = stack.pop();
+                    try stack.push(@divTrunc(b, a));
+                },
+                '%' => {
+                    const a = stack.pop();
+                    const b = stack.pop();
+                    try stack.push(@rem(b, a));
+                },
+                '!' => {
+                    const a = stack.pop();
+                    if(a != 0){
+                        try stack.push(0);
+                    }else{
+                        try stack.push(1);
+                    }
+                },
+                '`' => {
+                    const a = stack.pop();
+                    const b = stack.pop();
+                    if(b > a){
+                        try stack.push(1);
+                    }else{
+                        try stack.push(0);
+                    }
+                },
 
-            // Stack manipulation
-            ':' => {
-                const a = stack.pop();
-                try stack.push(a);
-                try stack.push(a);
-            },
+                // Output
+                '.' => {
+                    const a = stack.pop();
+                    print("{d} ", .{a});
+                },
+                ',' => {
+                    const a = stack.pop();
+                    print("{c}", .{@intCast(u8, a)});
+                },
+                '"' => {
+                    string_mode = true;
+                },
 
-            // Flow control
-            '>' => {
-                dir.x = 1;
-                dir.y = 0;
-            },
-            '<' => {
-                dir.x = -1;
-                dir.y = 0;
-            },
-            'v' => {
-                dir.x = 0;
-                dir.y = 1;
-            },
-            '^' => {
-                dir.x = 0;
-                dir.y = -1;
-            },
+                // Stack manipulation
+                ':' => {
+                    const a = stack.pop();
+                    try stack.push(a);
+                    try stack.push(a);
+                },
+                '\\' => {
+                    const a = stack.pop();
+                    const b = stack.pop();
+                    try stack.push(a);
+                    try stack.push(b);
+                },
+                '$' => {
+                    _ = stack.pop();
+                },
 
-            // Exit
-            '@' => return 0,
+                // Flow control
+                '>' => {
+                    ip.dir.x = 1;
+                    ip.dir.y = 0;
+                },
+                '<' => {
+                    ip.dir.x = -1;
+                    ip.dir.y = 0;
+                },
+                'v' => {
+                    ip.dir.x = 0;
+                    ip.dir.y = 1;
+                },
+                '^' => {
+                    ip.dir.x = 0;
+                    ip.dir.y = -1;
+                },
+                '#' => {
+                    ip.next();
+                },
+                // Conditionals
+                '_' => {
+                    const a = stack.pop();
+                    if(a != 0){
+                        ip.dir.x = -1;
+                    }else{
+                        ip.dir.x = 1;
+                    }
+                    ip.dir.y = 0;
+                },
+                '|' => {
+                    const a = stack.pop();
+                    if(a != 0){
+                        ip.dir.y = -1;
+                    }else{
+                        ip.dir.y = 1;
+                    }
+                    ip.dir.x = 0;
+                },
 
-            // Error
-            else => return FungeError.InvalidInstructionError,
+                // Self-modifying
+                'g' => {
+                    const y = stack.pop();
+                    const x = stack.pop();
+                    try stack.push(field.get(.{.x=x, .y=y}));
+                },
+                'p' => {
+                    const y = stack.pop();
+                    const x = stack.pop();
+                    const v = stack.pop();
+                    try field.put(.{.x=x, .y=y}, v);
+                },
+
+                // Exit
+                '@' => return 0,
+
+                // Error
+                else => {
+                    print("({}, {}) = {c}", .{ip.pos.x, ip.pos.y, @intCast(u8,i)});
+                    return FungeError.InvalidInstructionError;
+                },
+            }
         }
 
         // Increment IP
-        pos.x += dir.x;
-        pos.y += dir.y;
-        const max = field.bound();
-        if(pos.x > max.x){
-            pos.x = 0;
-        }
-        if(pos.y > max.y){
-            pos.y = 0;
-        }
-        if(pos.x < 0){
-            pos.x = max.x;
-        }
-        if(pos.y < 0){
-            pos.y = max.y;
-        }
+        ip.next();
     }
 }
 
@@ -163,5 +232,5 @@ pub fn main() !u8 {
     try expect(args.len >= 2);
 
     var f = try parse(args[1]);
-    return run(f);
+    return run(&f);
 }

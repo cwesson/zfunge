@@ -17,8 +17,6 @@ const gpa = general_purpose_allocator.allocator();
 
 /// Funge error type.
 const FungeError = error {
-    /// Errors that should never occur.
-    UnexpectedError,
     /// Invalid instruction encountered.
     InvalidInstructionError,
 };
@@ -30,7 +28,7 @@ fn parse(filename: []u8) !funge.Field {
     const file = try std.fs.cwd().openFile(filename, .{.read=true, .write=false});
     defer file.close();
 
-    var f = try funge.Field.init();
+    var field = try funge.Field.init();
     const reader = file.reader();
     var x: i64 = 0;
     var y: i64 = 0;
@@ -43,13 +41,13 @@ fn parse(filename: []u8) !funge.Field {
                 eol = true;
             }
         }else{
-            try f.put(.{.x=x, .y=y}, byte);
+            try field.put(.{.x=x, .y=y}, byte);
             x += 1;
             eol = false;
         }
     } else |err| {
         switch (err) {
-            error.EndOfStream => return f,
+            error.EndOfStream => return field,
             else => |e| return e,
         }
     }
@@ -216,7 +214,7 @@ fn run(field: *funge.Field) !u8 {
                             ip.dir.x = 0;
                             ip.dir.y = -1;
                         },
-                        else => return FungeError.UnexpectedError,
+                        else => unreachable,
                     }
                 },
                 // Conditionals
@@ -277,4 +275,10 @@ pub fn main() !u8 {
 
     var f = try parse(args[1]);
     return run(&f);
+}
+
+test {
+    var field = try funge.Field.init();
+    _ = try funge.Stack.init();
+    _ = funge.IP.init(.{.x=0, .y=0}, .{.x=1, .y=0}, &field);
 }

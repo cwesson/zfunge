@@ -9,9 +9,6 @@ const funge = struct {
     usingnamespace @import("field.zig");
 };
 
-var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
-const gpa = general_purpose_allocator.allocator();
-
 /// IP type for Funge.
 pub const IP = struct {
     /// Position of the IP.
@@ -52,7 +49,74 @@ pub const IP = struct {
     }
 
     /// Get the current position.
+    /// @return Current position.
     pub fn position(self: IP) funge.Vector {
         return self.pos;
+    }
+
+    test "warp +x" {
+        var field = try funge.Field.init();
+        try field.put(.{.x=79, .y=24}, 'a');
+        var ip = IP.init(.{.x=0, .y=0}, .{.x=1, .y=0}, &field);
+
+        var i: i64 = 0;
+        while (i < 80) : (i += 1){
+            var pos = ip.position();
+            try expect(pos.x == i);
+            try expect(pos.y == 0);
+            ip.next();
+        }
+
+        // Make sure it wrapped
+        var pos = ip.position();
+        try expect(pos.x == 0);
+        try expect(pos.y == 0);
+    }
+
+    test "warp +y" {
+        var field = try funge.Field.init();
+        try field.put(.{.x=79, .y=24}, 'a');
+        var ip = IP.init(.{.x=0, .y=0}, .{.x=0, .y=1}, &field);
+
+        var i: i64 = 0;
+        while (i < 25) : (i += 1){
+            var pos = ip.position();
+            try expect(pos.x == 0);
+            try expect(pos.y == i);
+            ip.next();
+        }
+
+        // Make sure it wrapped
+        var pos = ip.position();
+        try expect(pos.x == 0);
+        try expect(pos.y == 0);
+    }
+
+    test "warp -x" {
+        var field = try funge.Field.init();
+        try field.put(.{.x=79, .y=24}, 'a');
+        var ip = IP.init(.{.x=0, .y=0}, .{.x=-1, .y=0}, &field);
+
+        var i: i64 = 0;
+        while (i < 80) : (i += 1){
+            ip.next();
+            var pos = ip.position();
+            try expect(pos.x == 80-i-1);
+            try expect(pos.y == 0);
+        }
+    }
+
+    test "warp -y" {
+        var field = try funge.Field.init();
+        try field.put(.{.x=79, .y=24}, 'a');
+        var ip = IP.init(.{.x=0, .y=0}, .{.x=0, .y=-1}, &field);
+
+        var i: i64 = 0;
+        while (i < 25) : (i += 1){
+            ip.next();
+            var pos = ip.position();
+            try expect(pos.x == 0);
+            try expect(pos.y == 25-i-1);
+        }
     }
 };

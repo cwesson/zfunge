@@ -32,20 +32,25 @@ pub const Stack = struct {
     pub fn pop(self: *Stack) i64 {
         return self.list.popOrNull() orelse 0;
     }
+
+    test "simple push/pop" {
+        var s = try Stack.init();
+
+        // empty stack should pop 0
+        try expect(s.pop() == 0);
+
+        try s.push(1);
+        try s.push(2);
+        try expect(s.pop() == 2);
+        try s.push(3);
+        try s.push(4);
+        try expect(s.pop() == 4);
+        try expect(s.pop() == 3);
+        try expect(s.pop() == 1);
+
+        // empty stack should pop 0
+        try expect(s.pop() == 0);
+        try expect(s.pop() == 0);
+        try expect(s.pop() == 0);
+    }
 };
-
-test "simple push/pop" {
-    var s = try Stack.init();
-
-    // empty stack should pop 0
-    try expect(s.pop() == 0);
-
-    try s.push(1);
-    try s.push(2);
-    try expect(s.pop() == 2);
-    try s.push(3);
-    try s.push(4);
-    try expect(s.pop() == 4);
-    try expect(s.pop() == 3);
-    try expect(s.pop() == 1);
-}

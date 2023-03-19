@@ -3,6 +3,7 @@
 //! Field for zFunge.
 
 const std = @import("std");
+const expect = @import("std").testing.expect;
 const vector = @import("vector.zig");
 
 var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
@@ -47,5 +48,29 @@ pub const Field = struct {
     /// @return Maximum bounds.
     pub fn bound(self: Field) vector.Vector {
         return self.max;
+    }
+
+    test "basic test" {
+        var field = try Field.init();
+
+        try field.put(.{.x=1, .y=2}, 'a');
+        try field.put(.{.x=3, .y=4}, 'b');
+        try field.put(.{.x=5, .y=6}, 'c');
+        try field.put(.{.x=7, .y=8}, 'd');
+        try field.put(.{.x=9, .y=0}, 'e');
+
+        // Unpopulated cells are spaces
+        try expect(field.get(.{.x=0, .y=0}) == ' ');
+        try expect(field.get(.{.x=0, .y=9}) == ' ');
+
+        try expect(field.get(.{.x=3, .y=4}) == 'b');
+        try expect(field.get(.{.x=7, .y=8}) == 'd');
+        try expect(field.get(.{.x=5, .y=6}) == 'c');
+        try expect(field.get(.{.x=9, .y=0}) == 'e');
+        try expect(field.get(.{.x=1, .y=2}) == 'a');
+
+        // Unpopulated cells are spaces
+        try expect(field.get(.{.x=1, .y=1}) == ' ');
+        try expect(field.get(.{.x=2, .y=2}) == ' ');
     }
 };

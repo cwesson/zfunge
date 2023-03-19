@@ -20,7 +20,7 @@ pub const IP = struct {
 
     /// Create a new IP.
     pub fn init(pos: funge.Vector, dir: funge.Vector, field: *funge.Field) IP {
-        return IP {
+        return IP{
             .pos = pos,
             .dir = dir,
             .field = field,
@@ -33,17 +33,17 @@ pub const IP = struct {
         self.pos.y += self.dir.y;
         // Check wrapping off positive edge
         const max = self.field.bound();
-        if(self.pos.x > max.x){
+        if (self.pos.x > max.x) {
             self.pos.x = 0;
         }
-        if(self.pos.y > max.y){
+        if (self.pos.y > max.y) {
             self.pos.y = 0;
         }
         // Check wrapping off negative edge
-        if(self.pos.x < 0){
+        if (self.pos.x < 0) {
             self.pos.x = max.x;
         }
-        if(self.pos.y < 0){
+        if (self.pos.y < 0) {
             self.pos.y = max.y;
         }
     }
@@ -56,11 +56,11 @@ pub const IP = struct {
 
     test "warp +x" {
         var field = try funge.Field.init();
-        try field.put(.{.x=79, .y=24}, 'a');
-        var ip = IP.init(.{.x=0, .y=0}, .{.x=1, .y=0}, &field);
+        try field.put(.{ .x = 79, .y = 24 }, 'a');
+        var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, &field);
 
         var i: i64 = 0;
-        while (i < 80) : (i += 1){
+        while (i < 80) : (i += 1) {
             var pos = ip.position();
             try expect(pos.x == i);
             try expect(pos.y == 0);
@@ -75,11 +75,11 @@ pub const IP = struct {
 
     test "warp +y" {
         var field = try funge.Field.init();
-        try field.put(.{.x=79, .y=24}, 'a');
-        var ip = IP.init(.{.x=0, .y=0}, .{.x=0, .y=1}, &field);
+        try field.put(.{ .x = 79, .y = 24 }, 'a');
+        var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 0, .y = 1 }, &field);
 
         var i: i64 = 0;
-        while (i < 25) : (i += 1){
+        while (i < 25) : (i += 1) {
             var pos = ip.position();
             try expect(pos.x == 0);
             try expect(pos.y == i);
@@ -94,29 +94,29 @@ pub const IP = struct {
 
     test "warp -x" {
         var field = try funge.Field.init();
-        try field.put(.{.x=79, .y=24}, 'a');
-        var ip = IP.init(.{.x=0, .y=0}, .{.x=-1, .y=0}, &field);
+        try field.put(.{ .x = 79, .y = 24 }, 'a');
+        var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = -1, .y = 0 }, &field);
 
         var i: i64 = 0;
-        while (i < 80) : (i += 1){
+        while (i < 80) : (i += 1) {
             ip.next();
             var pos = ip.position();
-            try expect(pos.x == 80-i-1);
+            try expect(pos.x == 80 - i - 1);
             try expect(pos.y == 0);
         }
     }
 
     test "warp -y" {
         var field = try funge.Field.init();
-        try field.put(.{.x=79, .y=24}, 'a');
-        var ip = IP.init(.{.x=0, .y=0}, .{.x=0, .y=-1}, &field);
+        try field.put(.{ .x = 79, .y = 24 }, 'a');
+        var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 0, .y = -1 }, &field);
 
         var i: i64 = 0;
-        while (i < 25) : (i += 1){
+        while (i < 25) : (i += 1) {
             ip.next();
             var pos = ip.position();
             try expect(pos.x == 0);
-            try expect(pos.y == 25-i-1);
+            try expect(pos.y == 25 - i - 1);
         }
     }
 };

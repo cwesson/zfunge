@@ -18,9 +18,9 @@ pub const Field = struct {
 
     /// Create a new Field.
     pub fn init() !Field {
-        return Field {
+        return Field{
             .map = std.AutoHashMap(vector.Vector, i64).init(gpa),
-            .max = .{.x=0, .y=0},
+            .max = .{ .x = 0, .y = 0 },
         };
     }
 
@@ -29,10 +29,10 @@ pub const Field = struct {
     /// @param val Value to put.
     pub fn put(self: *Field, pos: vector.Vector, val: i64) !void {
         try self.map.put(pos, val);
-        if(pos.x > self.max.x){
+        if (pos.x > self.max.x) {
             self.max.x = pos.x;
         }
-        if(pos.y > self.max.y){
+        if (pos.y > self.max.y) {
             self.max.y = pos.y;
         }
     }
@@ -53,24 +53,24 @@ pub const Field = struct {
     test "basic test" {
         var field = try Field.init();
 
-        try field.put(.{.x=1, .y=2}, 'a');
-        try field.put(.{.x=3, .y=4}, 'b');
-        try field.put(.{.x=5, .y=6}, 'c');
-        try field.put(.{.x=7, .y=8}, 'd');
-        try field.put(.{.x=9, .y=0}, 'e');
+        try field.put(.{ .x = 1, .y = 2 }, 'a');
+        try field.put(.{ .x = 3, .y = 4 }, 'b');
+        try field.put(.{ .x = 5, .y = 6 }, 'c');
+        try field.put(.{ .x = 7, .y = 8 }, 'd');
+        try field.put(.{ .x = 9, .y = 0 }, 'e');
 
         // Unpopulated cells are spaces
-        try expect(field.get(.{.x=0, .y=0}) == ' ');
-        try expect(field.get(.{.x=0, .y=9}) == ' ');
+        try expect(field.get(.{ .x = 0, .y = 0 }) == ' ');
+        try expect(field.get(.{ .x = 0, .y = 9 }) == ' ');
 
-        try expect(field.get(.{.x=3, .y=4}) == 'b');
-        try expect(field.get(.{.x=7, .y=8}) == 'd');
-        try expect(field.get(.{.x=5, .y=6}) == 'c');
-        try expect(field.get(.{.x=9, .y=0}) == 'e');
-        try expect(field.get(.{.x=1, .y=2}) == 'a');
+        try expect(field.get(.{ .x = 3, .y = 4 }) == 'b');
+        try expect(field.get(.{ .x = 7, .y = 8 }) == 'd');
+        try expect(field.get(.{ .x = 5, .y = 6 }) == 'c');
+        try expect(field.get(.{ .x = 9, .y = 0 }) == 'e');
+        try expect(field.get(.{ .x = 1, .y = 2 }) == 'a');
 
         // Unpopulated cells are spaces
-        try expect(field.get(.{.x=1, .y=1}) == ' ');
-        try expect(field.get(.{.x=2, .y=2}) == ' ');
+        try expect(field.get(.{ .x = 1, .y = 1 }) == ' ');
+        try expect(field.get(.{ .x = 2, .y = 2 }) == ' ');
     }
 };

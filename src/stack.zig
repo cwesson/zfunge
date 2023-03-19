@@ -16,7 +16,7 @@ pub const Stack = struct {
 
     /// Create a new stack.
     pub fn init() !Stack {
-        return Stack {
+        return Stack{
             .list = std.ArrayList(i64).init(gpa),
         };
     }

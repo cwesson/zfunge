@@ -15,9 +15,11 @@ const funge = struct {
 var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
 const gpa = general_purpose_allocator.allocator();
 
-/// Funge error type
+/// Funge error type.
 const FungeError = error {
-    /// Invalid instruction encountered
+    /// Errors that should never occur.
+    UnexpectedError,
+    /// Invalid instruction encountered.
     InvalidInstructionError,
 };
 
@@ -57,6 +59,7 @@ fn parse(filename: []u8) !funge.Field {
 /// @param field Field of the Funge program.
 /// @return Exit code from the Funge program.
 fn run(field: *funge.Field) !u8 {
+    var rand = std.rand.DefaultPrng.init(@intCast(u64, std.time.milliTimestamp()));
     // Prepare IP
     var ip = funge.IP.init(.{.x=0, .y=0}, .{.x=1, .y=0}, field);
     // Prepare stack
@@ -174,6 +177,27 @@ fn run(field: *funge.Field) !u8 {
                 },
                 '#' => {
                     ip.next();
+                },
+                '?' => {
+                    switch(rand.random().intRangeAtMost(u8, 0, 3)){
+                        0 => {
+                            ip.dir.x = 1;
+                            ip.dir.y = 0;
+                        },
+                        1 => {
+                            ip.dir.x = -1;
+                            ip.dir.y = 0;
+                        },
+                        2 => {
+                            ip.dir.x = 0;
+                            ip.dir.y = 1;
+                        },
+                        3 => {
+                            ip.dir.x = 0;
+                            ip.dir.y = -1;
+                        },
+                        else => return FungeError.UnexpectedError,
+                    }
                 },
                 // Conditionals
                 '_' => {

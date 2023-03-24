@@ -4,7 +4,8 @@
 
 const std = @import("std");
 const expect = @import("std").testing.expect;
-const print = std.debug.print;
+const print = std.io.getStdOut().writer().print;
+const perror = std.io.getStdErr().writer().print;
 const funge = struct {
     usingnamespace @import("vector.zig");
     usingnamespace @import("field.zig");
@@ -150,11 +151,11 @@ fn run(field: *funge.Field) !u8 {
                 },
                 '.' => {
                     const a = stack.pop();
-                    print("{d} ", .{a});
+                    try print("{d} ", .{a});
                 },
                 ',' => {
                     const a = stack.pop();
-                    print("{c}", .{@intCast(u8, a)});
+                    try print("{c}", .{@intCast(u8, a)});
                 },
                 '"' => {
                     string_mode = true;
@@ -255,7 +256,7 @@ fn run(field: *funge.Field) !u8 {
 
                 // Error
                 else => {
-                    print("({}, {}) = {c}", .{ ip.pos.x, ip.pos.y, @intCast(u8, i) });
+                    perror("({}, {}) = {c}", .{ ip.pos.x, ip.pos.y, @intCast(u8, i) }) catch {};
                     return FungeError.InvalidInstructionError;
                 },
             }
@@ -278,7 +279,9 @@ pub fn main() !u8 {
 }
 
 test {
-    var field = try funge.Field.init();
-    _ = try funge.Stack.init();
-    _ = funge.IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, &field);
+    var str = "test/test_flow.bf".*;
+    const name: []u8 = &str;
+    var field = try parse(name);
+    const ret = try run(&field);
+    try expect(ret == 0);
 }

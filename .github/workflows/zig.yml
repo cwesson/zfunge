@@ -1,4 +1,4 @@
-name: Zig CI
+name: zFunge CI
 
 on: [ push, pull_request ]
 

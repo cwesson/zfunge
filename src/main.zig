@@ -103,12 +103,20 @@ fn run(field: *funge.Field) !u8 {
                 '/' => {
                     const a = stack.pop();
                     const b = stack.pop();
-                    try stack.push(@divTrunc(b, a));
+                    if (a == 0) {
+                        try stack.push(0);
+                    } else {
+                        try stack.push(@divTrunc(b, a));
+                    }
                 },
                 '%' => {
                     const a = stack.pop();
                     const b = stack.pop();
-                    try stack.push(@rem(b, a));
+                    if (a == 0) {
+                        try stack.push(0);
+                    } else {
+                        try stack.push(@rem(b, a));
+                    }
                 },
                 '!' => {
                     const a = stack.pop();

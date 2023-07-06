@@ -28,12 +28,32 @@ pub const Field = struct {
     /// @param pos Position to put to.
     /// @param val Value to put.
     pub fn put(self: *Field, pos: vector.Vector, val: i64) !void {
-        try self.map.put(pos, val);
-        if (pos.x > self.max.x) {
-            self.max.x = pos.x;
-        }
-        if (pos.y > self.max.y) {
-            self.max.y = pos.y;
+        if (val == ' ') {
+            _ = self.map.remove(pos);
+            // Find new max
+            if (pos.x > self.max.x or pos.y > self.max.y) {
+                var max_x: i64 = 0;
+                var max_y: i64 = 0;
+                var it = self.map.keyIterator();
+                while (it.next()) |key| {
+                    if (key.x > max_x) {
+                        max_x = key.x;
+                    }
+                    if (key.y > max_y) {
+                        max_y = key.y;
+                    }
+                }
+                self.max.x = max_x;
+                self.max.y = max_y;
+            }
+        } else {
+            try self.map.put(pos, val);
+            if (pos.x > self.max.x) {
+                self.max.x = pos.x;
+            }
+            if (pos.y > self.max.y) {
+                self.max.y = pos.y;
+            }
         }
     }
 

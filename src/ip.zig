@@ -61,14 +61,14 @@ pub const IP = struct {
 
         var i: i64 = 0;
         while (i < 80) : (i += 1) {
-            var pos = ip.position();
+            const pos = ip.position();
             try expect(pos.x == i);
             try expect(pos.y == 0);
             ip.next();
         }
 
         // Make sure it wrapped
-        var pos = ip.position();
+        const pos = ip.position();
         try expect(pos.x == 0);
         try expect(pos.y == 0);
     }
@@ -80,14 +80,14 @@ pub const IP = struct {
 
         var i: i64 = 0;
         while (i < 25) : (i += 1) {
-            var pos = ip.position();
+            const pos = ip.position();
             try expect(pos.x == 0);
             try expect(pos.y == i);
             ip.next();
         }
 
         // Make sure it wrapped
-        var pos = ip.position();
+        const pos = ip.position();
         try expect(pos.x == 0);
         try expect(pos.y == 0);
     }
@@ -100,7 +100,7 @@ pub const IP = struct {
         var i: i64 = 0;
         while (i < 80) : (i += 1) {
             ip.next();
-            var pos = ip.position();
+            const pos = ip.position();
             try expect(pos.x == 80 - i - 1);
             try expect(pos.y == 0);
         }
@@ -114,7 +114,7 @@ pub const IP = struct {
         var i: i64 = 0;
         while (i < 25) : (i += 1) {
             ip.next();
-            var pos = ip.position();
+            const pos = ip.position();
             try expect(pos.x == 0);
             try expect(pos.y == 25 - i - 1);
         }

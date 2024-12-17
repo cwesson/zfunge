@@ -4,8 +4,8 @@
 
 const std = @import("std");
 const expect = @import("std").testing.expect;
-const print = std.io.getStdOut().writer().print;
-const perror = std.io.getStdErr().writer().print;
+const stdout = std.io.getStdOut().writer();
+const stderr = std.io.getStdErr().writer();
 const funge = struct {
     usingnamespace @import("vector.zig");
     usingnamespace @import("field.zig");
@@ -26,7 +26,7 @@ const FungeError = error{
 /// @param filename Path of the file.
 /// @return Field for the Funge program.
 fn parse(filename: []u8) !funge.Field {
-    const file = try std.fs.cwd().openFile(filename, .{ .read = true, .write = false });
+    const file = try std.fs.cwd().openFile(filename, .{ .mode = .read_only });
     defer file.close();
 
     var field = try funge.Field.init();
@@ -58,7 +58,7 @@ fn parse(filename: []u8) !funge.Field {
 /// @param field Field of the Funge program.
 /// @return Exit code from the Funge program.
 fn run(field: *funge.Field) !u8 {
-    var rand = std.rand.DefaultPrng.init(@intCast(u64, std.time.milliTimestamp()));
+    var rand = std.rand.DefaultPrng.init(@intCast(std.time.milliTimestamp()));
     // Prepare IP
     var ip = funge.IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, field);
     // Prepare stack
@@ -155,15 +155,16 @@ fn run(field: *funge.Field) !u8 {
                 '~' => {
                     const stdin = std.io.getStdIn().reader();
                     const c = try stdin.readByte();
-                    try stack.push(@intCast(u8, c));
+                    try stack.push(@intCast(c));
                 },
                 '.' => {
                     const a = stack.pop();
-                    try print("{d} ", .{a});
+                    try stdout.print("{d} ", .{a});
                 },
                 ',' => {
                     const a = stack.pop();
-                    try print("{c}", .{@intCast(u8, a)});
+                    const c: u8 = @intCast(a);
+                    try stdout.print("{c}", .{c});
                 },
                 '"' => {
                     string_mode = true;
@@ -264,7 +265,8 @@ fn run(field: *funge.Field) !u8 {
 
                 // Error
                 else => {
-                    perror("({}, {}) = {c}", .{ ip.pos.x, ip.pos.y, @intCast(u8, i) }) catch {};
+                    const c: u8 = @intCast(i);
+                    stderr.print("({}, {}) = {c}", .{ ip.pos.x, ip.pos.y, c }) catch {};
                     return FungeError.InvalidInstructionError;
                 },
             }

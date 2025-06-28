@@ -58,7 +58,7 @@ fn parse(filename: []u8) !funge.Field {
 /// @param field Field of the Funge program.
 /// @return Exit code from the Funge program.
 fn run(field: *funge.Field) !u8 {
-    var rand = std.rand.DefaultPrng.init(@intCast(std.time.milliTimestamp()));
+    var rand = std.Random.DefaultPrng.init(@intCast(std.time.milliTimestamp()));
     // Prepare IP
     var ip = funge.IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, field);
     // Prepare stack

@@ -30,7 +30,7 @@ pub const Stack = struct {
     /// Pop a value off the stack.
     /// @param Value from the top of the stack.
     pub fn pop(self: *Stack) i64 {
-        return self.list.popOrNull() orelse 0;
+        return self.list.pop() orelse 0;
     }
 
     test "simple push/pop" {

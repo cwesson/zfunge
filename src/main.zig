@@ -289,10 +289,25 @@ pub fn main() !u8 {
     return run(&f, &stdout.any());
 }
 
-test {
-    var str = "test/test_flow.bf".*;
-    const name: []u8 = &str;
-    var field = try parse(name);
-    const ret = try run(&field, &std.io.null_writer.any());
+/// Parse and run a test Befunge.
+/// @param filename Befunge file to run.
+/// @param expected Expected stdout.
+fn test_run(filename: []const u8, expected: []const u8) !void {
+    var field = try parse(filename);
+    var changes = std.io.changeDetectionStream(expected, std.io.null_writer);
+    const ret = try run(&field, &changes.writer().any());
+    try expect(!changes.changeDetected());
     try expect(ret == 0);
+}
+
+test "flow control" {
+    try test_run("test/test_flow.bf", "4 3 2 1 0 ");
+}
+
+test "arithmetic" {
+    try test_run("test/test_arith.bf", "2 3 5 8 13 21 ");
+}
+
+test "char output" {
+    try test_run("test/test_outchar.bf", "Hello World!");
 }

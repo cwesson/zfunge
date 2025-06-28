@@ -25,7 +25,7 @@ const FungeError = error{
 /// Parse a Funge file.
 /// @param filename Path of the file.
 /// @return Field for the Funge program.
-fn parse(filename: []u8) !funge.Field {
+fn parse(filename: []const u8) !funge.Field {
     const file = try std.fs.cwd().openFile(filename, .{ .mode = .read_only });
     defer file.close();
 
@@ -56,8 +56,9 @@ fn parse(filename: []u8) !funge.Field {
 
 /// Run a Funge program.
 /// @param field Field of the Funge program.
+/// @param output Writer to use for printing.
 /// @return Exit code from the Funge program.
-fn run(field: *funge.Field) !u8 {
+fn run(field: *funge.Field, output: *const std.io.AnyWriter) !u8 {
     var rand = std.Random.DefaultPrng.init(@intCast(std.time.milliTimestamp()));
     // Prepare IP
     var ip = funge.IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, field);
@@ -159,12 +160,12 @@ fn run(field: *funge.Field) !u8 {
                 },
                 '.' => {
                     const a = stack.pop();
-                    try stdout.print("{d} ", .{a});
+                    try output.print("{d} ", .{a});
                 },
                 ',' => {
                     const a = stack.pop();
                     const c: u8 = @intCast(a);
-                    try stdout.print("{c}", .{c});
+                    try output.print("{c}", .{c});
                 },
                 '"' => {
                     string_mode = true;
@@ -285,13 +286,13 @@ pub fn main() !u8 {
     try expect(args.len >= 2);
 
     var f = try parse(args[1]);
-    return run(&f);
+    return run(&f, &stdout.any());
 }
 
 test {
     var str = "test/test_flow.bf".*;
     const name: []u8 = &str;
     var field = try parse(name);
-    const ret = try run(&field);
+    const ret = try run(&field, &std.io.null_writer.any());
     try expect(ret == 0);
 }

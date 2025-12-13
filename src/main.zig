@@ -321,3 +321,7 @@ test "arithmetic" {
 test "char output" {
     try test_run("test/test_outchar.bf", "Hello World!");
 }
+
+test "conditionals" {
+    try test_run("test/test_if.bf", "4 3 2 1 ");
+}

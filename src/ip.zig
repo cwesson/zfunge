@@ -4,22 +4,20 @@
 
 const std = @import("std");
 const expect = @import("std").testing.expect;
-const funge = struct {
-    usingnamespace @import("vector.zig");
-    usingnamespace @import("field.zig");
-};
+const fungevector = @import("vector.zig");
+const fungefield = @import("field.zig");
 
 /// IP type for Funge.
 pub const IP = struct {
     /// Position of the IP.
-    pos: funge.Vector,
+    pos: fungevector.Vector,
     /// Direction of the IP.
-    dir: funge.Vector,
+    dir: fungevector.Vector,
     /// Field the IP is on.
-    field: *funge.Field,
+    field: *fungefield.Field,
 
     /// Create a new IP.
-    pub fn init(pos: funge.Vector, dir: funge.Vector, field: *funge.Field) IP {
+    pub fn init(pos: fungevector.Vector, dir: fungevector.Vector, field: *fungefield.Field) IP {
         return IP{
             .pos = pos,
             .dir = dir,
@@ -50,12 +48,12 @@ pub const IP = struct {
 
     /// Get the current position.
     /// @return Current position.
-    pub fn position(self: IP) funge.Vector {
+    pub fn position(self: IP) fungevector.Vector {
         return self.pos;
     }
 
     test "warp +x" {
-        var field = try funge.Field.init();
+        var field = try fungefield.Field.init();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, &field);
 
@@ -74,7 +72,7 @@ pub const IP = struct {
     }
 
     test "warp +y" {
-        var field = try funge.Field.init();
+        var field = try fungefield.Field.init();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 0, .y = 1 }, &field);
 
@@ -93,7 +91,7 @@ pub const IP = struct {
     }
 
     test "warp -x" {
-        var field = try funge.Field.init();
+        var field = try fungefield.Field.init();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = -1, .y = 0 }, &field);
 
@@ -107,7 +105,7 @@ pub const IP = struct {
     }
 
     test "warp -y" {
-        var field = try funge.Field.init();
+        var field = try fungefield.Field.init();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 0, .y = -1 }, &field);
 

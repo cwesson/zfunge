@@ -4,14 +4,14 @@
 
 const std = @import("std");
 const expect = @import("std").testing.expect;
-const stdout = std.io.getStdOut().writer();
-const stderr = std.io.getStdErr().writer();
-const funge = struct {
-    usingnamespace @import("vector.zig");
-    usingnamespace @import("field.zig");
-    usingnamespace @import("stack.zig");
-    usingnamespace @import("ip.zig");
-};
+var stdout_buf: [16]u8 = undefined;
+var stderr_buf: [16]u8 = undefined;
+var stdout = std.fs.File.stdout().writer(&stdout_buf);
+var stderr = std.fs.File.stderr().writer(&stderr_buf);
+const fungevector = @import("vector.zig");
+const fungefield = @import("field.zig");
+const fungestack = @import("stack.zig");
+const fungeip = @import("ip.zig");
 
 var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
 const gpa = general_purpose_allocator.allocator();
@@ -25,16 +25,18 @@ const FungeError = error{
 /// Parse a Funge file.
 /// @param filename Path of the file.
 /// @return Field for the Funge program.
-fn parse(filename: []const u8) !funge.Field {
+fn parse(filename: []const u8) !fungefield.Field {
     const file = try std.fs.cwd().openFile(filename, .{ .mode = .read_only });
     defer file.close();
 
-    var field = try funge.Field.init();
-    const reader = file.reader();
+    var buf: [8]u8 = undefined;
+    var field = try fungefield.Field.init();
+    var reader_wrapped = file.reader(&buf);
+    const reader = &reader_wrapped.interface;
     var x: i64 = 0;
     var y: i64 = 0;
     var eol = false;
-    while (reader.readByte()) |byte| {
+    while (reader.takeByte()) |byte| {
         if (byte == '\n' or byte == '\r') {
             if (!eol) {
                 y += 1;
@@ -58,12 +60,12 @@ fn parse(filename: []const u8) !funge.Field {
 /// @param field Field of the Funge program.
 /// @param output Writer to use for printing.
 /// @return Exit code from the Funge program.
-fn run(field: *funge.Field, output: *const std.io.AnyWriter) !u8 {
+fn run(field: *fungefield.Field, output: *std.io.Writer) !u8 {
     var rand = std.Random.DefaultPrng.init(@intCast(std.time.milliTimestamp()));
     // Prepare IP
-    var ip = funge.IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, field);
+    var ip = fungeip.IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, field);
     // Prepare stack
-    var stack = try funge.Stack.init();
+    var stack = try fungestack.Stack.init();
     var string_mode = false;
 
     // Run the program
@@ -139,9 +141,11 @@ fn run(field: *funge.Field, output: *const std.io.AnyWriter) !u8 {
 
                 // Input/Output
                 '&' => {
-                    const stdin = std.io.getStdIn().reader();
+                    var buf: [16]u8 = undefined;
+                    var stdin_wrapped = std.fs.File.stdin().reader(&buf);
+                    const stdin = &stdin_wrapped.interface;
                     var val: i64 = 0;
-                    int_in: while (stdin.readByte()) |byte| {
+                    int_in: while (stdin.takeByte()) |byte| {
                         switch (byte) {
                             '0'...'9' => val = (val * 10) + (byte - '0'),
                             else => break :int_in,
@@ -154,18 +158,22 @@ fn run(field: *funge.Field, output: *const std.io.AnyWriter) !u8 {
                     try stack.push(val);
                 },
                 '~' => {
-                    const stdin = std.io.getStdIn().reader();
-                    const c = try stdin.readByte();
+                    var buf: [1]u8 = undefined;
+                    var stdin_wrapped = std.fs.File.stdin().reader(&buf);
+                    const stdin = &stdin_wrapped.interface;
+                    const c = try stdin.takeByte();
                     try stack.push(@intCast(c));
                 },
                 '.' => {
                     const a = stack.pop();
                     try output.print("{d} ", .{a});
+                    try output.flush();
                 },
                 ',' => {
                     const a = stack.pop();
                     const c: u8 = @intCast(a);
                     try output.print("{c}", .{c});
+                    try output.flush();
                 },
                 '"' => {
                     string_mode = true;
@@ -267,7 +275,9 @@ fn run(field: *funge.Field, output: *const std.io.AnyWriter) !u8 {
                 // Error
                 else => {
                     const c: u8 = @intCast(i);
-                    stderr.print("({}, {}) = {c}", .{ ip.pos.x, ip.pos.y, c }) catch {};
+                    const err = &stderr.interface;
+                    err.print("({}, {}) = {c}", .{ ip.pos.x, ip.pos.y, c }) catch {};
+                    try err.flush();
                     return FungeError.InvalidInstructionError;
                 },
             }
@@ -286,7 +296,7 @@ pub fn main() !u8 {
     try expect(args.len >= 2);
 
     var f = try parse(args[1]);
-    return run(&f, &stdout.any());
+    return run(&f, &stdout.interface);
 }
 
 /// Parse and run a test Befunge.
@@ -294,9 +304,9 @@ pub fn main() !u8 {
 /// @param expected Expected stdout.
 fn test_run(filename: []const u8, expected: []const u8) !void {
     var field = try parse(filename);
-    var changes = std.io.changeDetectionStream(expected, std.io.null_writer);
-    const ret = try run(&field, &changes.writer().any());
-    try expect(!changes.changeDetected());
+    var writer = std.io.Writer.Allocating.init(gpa);
+    const ret = try run(&field, &writer.writer);
+    try std.testing.expectEqualStrings(expected, writer.written());
     try expect(ret == 0);
 }
 

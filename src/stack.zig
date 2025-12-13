@@ -17,14 +17,14 @@ pub const Stack = struct {
     /// Create a new stack.
     pub fn init() !Stack {
         return Stack{
-            .list = std.ArrayList(i64).init(gpa),
+            .list = try std.ArrayList(i64).initCapacity(gpa, 128),
         };
     }
 
     /// Push a value on to the stack.
     /// @param val Value to push.
     pub fn push(self: *Stack, val: i64) !void {
-        try self.list.append(val);
+        try self.list.append(gpa, val);
     }
 
     /// Pop a value off the stack.

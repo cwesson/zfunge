@@ -17,6 +17,9 @@ pub const IP = struct {
     field: *fungefield.Field,
 
     /// Create a new IP.
+    /// @param pos Initial position.
+    /// @param dir Initial direction.
+    /// @param field Field the IP is on.
     pub fn init(pos: fungevector.Vector, dir: fungevector.Vector, field: *fungefield.Field) IP {
         return IP{
             .pos = pos,
@@ -53,7 +56,8 @@ pub const IP = struct {
     }
 
     test "warp +x" {
-        var field = try fungefield.Field.init();
+        var field = try fungefield.Field.init(std.testing.allocator);
+        defer field.deinit();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 1, .y = 0 }, &field);
 
@@ -72,7 +76,8 @@ pub const IP = struct {
     }
 
     test "warp +y" {
-        var field = try fungefield.Field.init();
+        var field = try fungefield.Field.init(std.testing.allocator);
+        defer field.deinit();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 0, .y = 1 }, &field);
 
@@ -91,7 +96,8 @@ pub const IP = struct {
     }
 
     test "warp -x" {
-        var field = try fungefield.Field.init();
+        var field = try fungefield.Field.init(std.testing.allocator);
+        defer field.deinit();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = -1, .y = 0 }, &field);
 
@@ -105,7 +111,8 @@ pub const IP = struct {
     }
 
     test "warp -y" {
-        var field = try fungefield.Field.init();
+        var field = try fungefield.Field.init(std.testing.allocator);
+        defer field.deinit();
         try field.put(.{ .x = 79, .y = 24 }, 'a');
         var ip = IP.init(.{ .x = 0, .y = 0 }, .{ .x = 0, .y = -1 }, &field);
 

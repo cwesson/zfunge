@@ -6,9 +6,6 @@ const std = @import("std");
 const expect = @import("std").testing.expect;
 const vector = @import("vector.zig");
 
-var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
-const gpa = general_purpose_allocator.allocator();
-
 /// Field type to store the Funge field.
 pub const Field = struct {
     /// Map of coordinates to values.
@@ -17,11 +14,17 @@ pub const Field = struct {
     max: vector.Vector,
 
     /// Create a new Field.
-    pub fn init() !Field {
+    /// @param alloc Allocator to store the Field.
+    pub fn init(alloc: std.mem.Allocator) !Field {
         return Field{
-            .map = std.AutoHashMap(vector.Vector, i64).init(gpa),
+            .map = std.AutoHashMap(vector.Vector, i64).init(alloc),
             .max = .{ .x = 0, .y = 0 },
         };
+    }
+
+    /// Destroy the Field.
+    pub fn deinit(self: *Field) void {
+        self.map.deinit();
     }
 
     /// Put a value on the field.
@@ -71,7 +74,8 @@ pub const Field = struct {
     }
 
     test "basic test" {
-        var field = try Field.init();
+        var field = try Field.init(std.testing.allocator);
+        defer field.deinit();
 
         try field.put(.{ .x = 1, .y = 2 }, 'a');
         try field.put(.{ .x = 3, .y = 4 }, 'b');

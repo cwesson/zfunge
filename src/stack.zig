@@ -6,25 +6,30 @@ const std = @import("std");
 const expect = @import("std").testing.expect;
 const vector = @import("vector.zig");
 
-var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
-const gpa = general_purpose_allocator.allocator();
-
 /// Stack type for Funge stacks.
 pub const Stack = struct {
     /// Values on the stack.
+    alloc: std.mem.Allocator,
     list: std.ArrayList(i64),
 
     /// Create a new stack.
-    pub fn init() !Stack {
+    /// @param alloc Allocator to store the stack.
+    pub fn init(alloc: std.mem.Allocator) !Stack {
         return Stack{
-            .list = try std.ArrayList(i64).initCapacity(gpa, 128),
+            .alloc = alloc,
+            .list = try std.ArrayList(i64).initCapacity(alloc, 128),
         };
+    }
+
+    /// Destroy the stack.
+    pub fn deinit(self: *Stack) void {
+        self.list.deinit(self.alloc);
     }
 
     /// Push a value on to the stack.
     /// @param val Value to push.
     pub fn push(self: *Stack, val: i64) !void {
-        try self.list.append(gpa, val);
+        try self.list.append(self.alloc, val);
     }
 
     /// Pop a value off the stack.
@@ -34,7 +39,8 @@ pub const Stack = struct {
     }
 
     test "simple push/pop" {
-        var s = try Stack.init();
+        var s = try Stack.init(std.testing.allocator);
+        defer s.deinit();
 
         // empty stack should pop 0
         try expect(s.pop() == 0);
